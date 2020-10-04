@@ -2,7 +2,7 @@
 
 # mint-boy
 
-Another gameboy emulator, built for my own amusement and education purposes. 
+Another gameboy emulator, built for my own amusement and educational purposes. 
 
 ## Details
 
