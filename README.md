@@ -1,5 +1,4 @@
-Master
-[![CircleCI](https://circleci.com/gh/bayleaf1130/mint-boy/tree/master.svg?style=shield)](https://circleci.com/gh/bayleaf1130/mint-boy/tree/master)
+[![CircleCI](https://circleci.com/gh/bayleaf1130/mint-boy.svg?style=svg)](https://circleci.com/gh/bayleaf1130/mint-boyj)
 
 # mint-boy
 
