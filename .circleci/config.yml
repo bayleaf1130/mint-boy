@@ -7,7 +7,10 @@ jobs:
             - checkout
             - run:
                 name: Install Deps
-                command: ./scripts/install_dependencies
+                command: |
+                    cd scripts
+                    chmod +x install_dependencies
+                    sudo ./install_dependencies
             - run:
                 name: Build
                 command: |
