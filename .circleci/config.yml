@@ -2,7 +2,7 @@ version: 2.0
 jobs:
     build:
         machine:
-            image: debian:stretch
+            image: cimg/base:2020.01
         steps:
             - checkout
             - run:
