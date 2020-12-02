@@ -1,7 +1,7 @@
 version: 2.1
 
 jobs:
-    linux-build:
+    build:
         docker:
             - image: cimg/base:2020.01
         steps:
