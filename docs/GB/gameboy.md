@@ -1,4 +1,4 @@
-### Gameboy Summary
+# Gameboy Summary
 
 This is just the most important bits pulled from various sources, mostly from the GB.pdf that is also in docs.
 

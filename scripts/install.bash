@@ -17,4 +17,4 @@ make -j$(nproc)
 sudo make install
 
 # Install lib deps
-sudo apt-get install -y libsfml-dev
+sudo apt-get install -y libsfml-dev libfreetype6-dev libopenal-dev libvorbis-dev libflac-dev
