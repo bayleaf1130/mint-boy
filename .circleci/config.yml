@@ -21,7 +21,3 @@ jobs:
                 name: Test
                 command: |
                     echo "Test"
-
-mintboy-workflow:
-    jobs:
-        - linux-build  
