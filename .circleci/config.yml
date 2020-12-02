@@ -1,24 +1,27 @@
-version: 2.0
+version: 2.1
+
 jobs:
-    build:
+    linux-build:
         docker:
             - image: cimg/base:2020.01
         steps:
             - checkout
             - run:
-                name: Install Deps
+                name: Dependencies
                 command: |
                     cd scripts
-                    chmod +x install_dependencies
-                    sudo ./install_dependencies
+                    chmod +x install.bash
+                    sudo ./install.bash
             - run:
                 name: Build
                 command: |
-                    mkdir build
-                    cd build
-                    cmake ..
-                    cmake --build .
+                    cmake -H. -Bbuild
+                    cmake --build build
             - run:
                 name: Test
                 command: |
                     echo "Test"
+
+mintboy-workflow:
+    jobs:
+        - linux-build  

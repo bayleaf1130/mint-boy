@@ -1,16 +1,15 @@
-# mint-boy root CMakeLists.txt
+# mintboy root CMakeLists.txt
 
 cmake_minimum_required(VERSION 3.13.4)
 
 # Important Vars
-set(PROJECT_NAME "mint-boy")
+set(PROJECT_NAME "mintboy")
 
 project(
     "${PROJECT_NAME}"
-    VERSION "0.0.1"
-    LANGUAGES C
+    VERSION 0.0.1
+    LANGUAGES CXX
 )
-
 
 # Disable insource builds
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
@@ -21,7 +20,7 @@ endif()
 option(BUILD_TESTS "Build Tests" OFF)
 
 # Packages
-find_package(SDL2 REQUIRED)
+find_package(SFML 2.5.1 COMPONENTS system window graphics audio REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(include)
@@ -33,6 +32,6 @@ endif()
 
 # Targets
 add_executable("${PROJECT_NAME}")
-target_include_directories("${PROJECT_NAME}" PRIVATE ${SDL2_INCLUDE_DIRS})
-target_link_libraries("${PROJECT_NAME}" ${SDL2_LIBRARIES})
+target_include_directories("${PROJECT_NAME}" PRIVATE ${SFML_INCLUDE_DIR})
+target_link_libraries("${PROJECT_NAME}" sfml-graphics sfml-window sfml-system)
 install(TARGETS "${PROJECT_NAME}" RUNTIME DESTINATION bin)

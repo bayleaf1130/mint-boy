@@ -1,9 +1,10 @@
 #!/bin/bash
 
+# Install main deps
 sudo apt-get update
 sudo apt-get install gcc g++
-sudo apt-get install -y libsdl2-dev
 
+# Build CMake from source
 version=3.13
 build=4
 mkdir ~/temp
@@ -14,3 +15,6 @@ cd cmake-$version.$build/
 ./bootstrap
 make -j$(nproc)
 sudo make install
+
+# Install lib deps
+sudo apt-get install -y libsfml-dev
