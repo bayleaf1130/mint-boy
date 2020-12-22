@@ -11,29 +11,26 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    uint32_t log_handle = 0;
-    LogFormat* log_format = NULL;
+    uint32_t logger = 0;
 
     #ifdef DEBUG
-        log_format = &(LogFormat){
-            .level = DEBUG,
-            .filename = NULL,
-            .intro = "(level) (msg)"
-        };
+        logger = InitStderrLogger(DEBUG, "(level) (msg)", true, 1024U);
     #else
-        log_format = &(LogFormat){
-            .level = WARN,
-            .filename = "mintboy-debug.log",
-            .intro = "(time) (level) (file) (line) (msg)",
-            .maxsize = 0xFFFFF // 1 MB
-        };
+        logger = InitFileLogger(
+            WARN, 
+            "mintboy-debug.log", 
+            ".", 
+            "(time) (level) (file) (line) (msg)",
+            0xFFFFU,
+            1024U
+        );
     #endif
-
-    // Init Logging before anythhing else
-    log_handle = InitLogger(log_format);
 
     // Parse Args
     Arguments args = ParseArgs(argc, argv);
+
+    // Clean up resources before exiting the program
+    CloseLoggers();
 
     return EXIT_SUCCESS;
 }
