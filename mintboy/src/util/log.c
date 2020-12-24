@@ -69,7 +69,7 @@ static LogMessage TERMINATE = {.done = true};
 
 // TODO Implement Log Queue
 static LogQueue* CreateQueue(uint32_t capacity) {
-    #if DEBUG
+    #ifdef DEBUG
         assert(capacity > 0U);
     #endif
     LogQueue* queue = error_checked_malloc(sizeof(LogQueue));
@@ -85,7 +85,7 @@ static LogQueue* CreateQueue(uint32_t capacity) {
 }
 
 static void DestroyQueue(LogQueue** queue) {
-    #if DEBUG
+    #ifdef DEBUG
         assert(queue);
         assert(*queue);
     #endif
@@ -128,7 +128,7 @@ static bool IsQueueEmpty(LogQueue* queue) {
 }
 
 static bool Enqueue(LogQueue* queue, LogMessage* message) {
-    #if DEBUG
+    #ifdef DEBUG
         assert(queue);
         assert(message);
     #endif
@@ -163,7 +163,7 @@ static bool Enqueue(LogQueue* queue, LogMessage* message) {
 }
 
 static LogMessage* Dequeue(LogQueue* queue) {
-    #if DEBUG
+    #ifdef DEBUG
         assert(queue);
     #endif
 
@@ -186,7 +186,7 @@ static LogMessage* Dequeue(LogQueue* queue) {
 
 
 static void LogIt(Logger* logger, LogMessage* message) {
-    #if DEBUG
+    #ifdef DEBUG
         assert(logger);
         assert(message);
         assert(message->msg);
@@ -206,11 +206,11 @@ static void LogIt(Logger* logger, LogMessage* message) {
 
 
 static void* RunLogger(void* arg) {
-    #if DEBUG
+    #ifdef DEBUG
         assert(arg);
     #endif
     Logger* logger = arg;
-    #if DEBUG
+    #ifdef DEBUG
         assert(logger->queue);
     #endif
 
@@ -273,7 +273,7 @@ static const char* StringFromLevel(LogLevel level) {
 
 
 uint32_t InitLogger(FILE* handle, LogLevel level, uint32_t max_queue_size, bool flush) {
-    #if DEBUG
+    #ifdef DEBUG
         assert(handle);
     #endif
     Logger* logger = NULL;
