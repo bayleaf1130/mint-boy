@@ -18,4 +18,4 @@ sudo make install
 
 # Install lib deps
 sudo apt-get install -y libx11-dev xorg-dev freeglut3-dev libudev-dev
-sudo apt-get install -y libsfml-dev libfreetype6-dev libopenal-dev libvorbis-dev libflac-dev
+sudo apt-get install -y libsdl2-dev valgrind

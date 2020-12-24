@@ -44,6 +44,6 @@ typedef struct {
     uint16_t hl;
     uint16_t sp;
     uint16_t pc;
-} sm83;
+} LR35902;
 
 #endif

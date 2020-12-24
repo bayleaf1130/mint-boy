@@ -6,7 +6,7 @@ Arguments ParseArgs(int argc, char** argv) {
     Arguments args;
     args.debug = false;
     
-    for(size_t i = 1; i < argc; i++) {
+    for(int i = 1; i < argc; i++) {
         char* arg = argv[i];
         if (strcmp(arg, "--debug") == 0) {
             args.debug = true;

@@ -16,7 +16,12 @@ jobs:
                 name: Build
                 command: |
                     cmake -H. -Bbuild
-                    cmake --build build
+                    cmake --build build --target mintboy
+            - run:
+                name: Valgrind
+                command: |
+                    valgrind --leak-check=full --show-leak-kinds=definite,indirect,possible 
+--error-exitcode=1 ./build/bin/mintboy rom
             - run:
                 name: Test
                 command: |
