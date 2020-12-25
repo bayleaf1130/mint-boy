@@ -1,11 +1,12 @@
-#ifndef MINTBOY_LOG_H
-#define MINTBOY_LOG_H
+#ifndef LOGGO_LOG_H
+#define LOGGO_LOG_H
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
 
+// Log Levels
 typedef enum {
     LOG_DEBUG,
     LOG_INFO,
@@ -14,29 +15,49 @@ typedef enum {
     LOG_FATAL
 } LogLevel;
 
-/* 
-Init Logger in its own thread, return a handle for the logger
-*/
-uint32_t InitLogger(FILE *handle, LogLevel level, uint32_t max_queue_size, bool flush);
+typedef int (*CloseStreamHandler)(FILE*);
+typedef int (*CloseDescriptorHandler)(int);
+
+// The user controls the format
+typedef struct {
+    LogLevel level;
+    uint32_t max_queue_size;
+    bool colors;
+    bool flush;
+    const char* time_format;
+    const char* linesep;
+    const char* linebeg;
+} UserLogFormat;
 
 /* 
-Stop Logger thread and clean up handles
-This just releases a handle. 
-CloseLoggers still needs to be called.
-*/
-void CloseLogger(uint32_t logger);
+ * Init Logger in its own thread.
+ * Create the logger or the queue.
+ * A handle is returned on success or -1 on failure.
+ * A format is required to have a handle to output logs too at the very minimum
+ */
+int32_t InitStreamLogger(UserLogFormat* user_format, FILE* handle, CloseStreamHandler close_handler);
+
 
 /* 
-Stop Logger threads and clean up handles
-*/
-void CloseLoggers();
+ * Init Logger in its own thread.
+ * Create the logger or the queue.
+ * A handle is returned on success or -1 on failure.
+ * A format is required to have a fd to output logs too at the very minimum
+ */
+int32_t InitDescriptorLogger(UserLogFormat* user_format, int fd, CloseDescriptorHandler close_handler);
+
 
 /* 
-Pass messages to the log queue, 
-the thread will then read and write them to the specified output 
-*/
-void Log(uint32_t logger_id, LogLevel level, const char* msg);
-void Log2(uint32_t logger_id, LogLevel level, char* msg, bool freeit);
+ * Stop Logger threads and clean up handles
+ */
+void ShutdownLoggers();
+
+/* 
+ * Pass messages to the log queue, 
+ * the thread will then read and write them to the specified output 
+ */
+void Log(int32_t logger_id, LogLevel level, const char* msg);
+void Log2(int32_t logger_id, LogLevel level, char* msg, bool free_string);
 
 
 #endif
