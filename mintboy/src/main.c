@@ -65,31 +65,32 @@ int main(int argc, char** argv) {
     Log(logger_id, LOG_ERROR, "Starting MintBoy9....");
     Log(raw_logger_id, LOG_FATAL, "Starting MintBoy10....");
 
-    // Clean up resources before exiting the program, make sure all logs are flushed
     ShutdownLoggers();
 
-    FILE* two = fopen("log_another.txt", "W");
 
-    raw_logger_id = InitStreamLogger(&(UserLogFormat){
+    FILE* file2 = fopen("log2.txt", "w");
+    if(!file2) fputs("uhh..", stdout);
+
+    uint32_t another_id = InitStreamLogger(&(UserLogFormat){
         .max_queue_size=24U,
         .level=LOG_DEBUG,
         .flush=true,
         .time_format="%Y-%m-%d",
         .linesep="\n",
-        .linebeg="====> [LOG STREAM 3] ",
-        .colors=true,
-    }, two, NULL);
+        .linebeg="====> [LOG SDF] ",
+        .colors=false,
+    }, file2, NULL);
 
     // Get rid of compiler warning
     fputs("\n", stdout);
     fputs(argv[0], stdout);
 
 
-    Log(raw_logger_id, LOG_DEBUG, "Dum1....");
-    Log(raw_logger_id, LOG_INFO, "Dum2....");
-    Log(raw_logger_id, LOG_WARN, "Dum3....");
-    Log(raw_logger_id, LOG_ERROR, "Dum4....");
-    Log(raw_logger_id, LOG_FATAL, "Dum5....");
+    Log(another_id, LOG_DEBUG, "Dum1....");
+    Log(another_id, LOG_INFO, "Dum2....");
+    Log(another_id, LOG_WARN, "Dum3....");
+    Log(another_id, LOG_ERROR, "Dum4....");
+    Log(another_id, LOG_FATAL, "Dum5....");
 
 
     // Parse Args

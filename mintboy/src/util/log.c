@@ -97,12 +97,12 @@ typedef struct {
     uint32_t head;
     uint32_t tail;
     uint32_t capacity;
-    uint32_t actual_capacity;
     uint32_t size;
     LogMessage** messages;
-    MUTEX_TYPE write_lock;
-    MUTEX_TYPE read_lock;
-    COND_TYPE message_arrived_condition;
+    MUTEX_TYPE queue_write_lock;
+    MUTEX_TYPE queue_read_lock;
+    COND_TYPE queue_not_full;
+    COND_TYPE queue_not_empty;
 } LogQueue;
 
 // Streams, high level buffered io
@@ -176,19 +176,19 @@ static LogQueue* CreateQueue(uint32_t capacity) {
     // Clear out values and set actual ones
     memset(queue, 0U, sizeof(*queue));
     queue->capacity = capacity;
-    queue->actual_capacity = capacity + 1;
     queue->head = 0U;
     queue->tail = 0U;
     queue->size = 0U;
 
     // Init locks/cond
-    MUTEX_INIT(queue->read_lock);
-    MUTEX_INIT(queue->write_lock);
-    COND_INIT(queue->message_arrived_condition);
+    MUTEX_INIT(queue->queue_write_lock);
+    MUTEX_INIT(queue->queue_read_lock);
+    COND_INIT(queue->queue_not_full);
+    COND_INIT(queue->queue_not_empty);
 
     // Init messsages circular buffer
-    queue->messages = error_checked_malloc(sizeof(LogMessage*) * queue->actual_capacity);
-    memset(queue->messages, 0U, sizeof(LogMessage*) * queue->actual_capacity);
+    queue->messages = error_checked_malloc(sizeof(LogMessage*) * queue->capacity);
+    memset(queue->messages, 0U, sizeof(LogMessage*) * queue->capacity);
     return queue;
 }
 
@@ -217,9 +217,10 @@ static void DestroyQueue(LogQueue** queue) {
     } 
 
     // Clean up threading stuff
-    MUTEX_DESTROY(((*queue)->read_lock));
-    MUTEX_DESTROY(((*queue)->write_lock));
-    COND_DESTROY(((*queue)->message_arrived_condition));
+    MUTEX_DESTROY(((*queue)->queue_write_lock));
+     MUTEX_DESTROY(((*queue)->queue_read_lock));
+    COND_DESTROY(((*queue)->queue_not_empty));
+    COND_DESTROY(((*queue)->queue_not_full));
 
     // Free messages that the queue owns
     if ((*queue)->messages) {
@@ -229,7 +230,7 @@ static void DestroyQueue(LogQueue** queue) {
 
     // Free the queue itself
     if (*queue) {
-        (*queue)->capacity = (*queue)->actual_capacity = (*queue)->head = (*queue)->tail = 0U;
+        (*queue)->capacity = (*queue)->head = (*queue)->tail = 0U;
         free(*queue);
         *queue = NULL;
     }
@@ -259,51 +260,27 @@ static bool IsQueueEmpty(LogQueue* queue) {
  * Unlock mutex
  */
 static bool Enqueue(LogQueue* queue, LogMessage* message) {
+    MUTEX_LOCK(queue->queue_write_lock);
+
     #ifdef DEBUG
         assert(queue);
         assert(message);
     #endif
-    bool result = false;
-
-    MUTEX_LOCK(queue->write_lock);
     
     // Just dont queue if full
-    if (IsQueueFull(queue)) {
-
-        // Last message sentinel
-        if (message->done) {
-            // Add message and advance queue
-            queue->messages[queue->head] = message;
-            queue->head = (queue->head + 1) % queue->actual_capacity;
-            queue->size++;
-            result = true;
-        }  else {
-            // Free the message and dont queue it, just drop it for now...
-            // TODO add blocking support so user can wait and make sure
-            // logs are not dropped
-            if (message->msg) {
-                free(message->msg);
-                message->msg = NULL;
-            }
-            free(message);
-            result = false;
-        }
-    } else {
-        // Add message and advance queue
-        queue->messages[queue->head] = message;
-        queue->head = (queue->head + 1) % queue->capacity;
-        queue->size++;
-        result = true;
-    }
-
-    // Let the thread know it has a message
-    if (result) {
-        COND_SIGNAL(queue->message_arrived_condition);
+    while (IsQueueFull(queue)) {
+        COND_WAIT(queue->queue_not_full, queue->queue_write_lock);
     }
     
-    // Unlock mutex when done
-    MUTEX_UNLOCK(queue->write_lock);
-    return result;
+    // Add message and advance queue
+    queue->messages[queue->head] = message;
+    queue->head = (queue->head + 1) % queue->capacity;
+    queue->size++;
+
+    // Let the thread know it has a message
+    COND_SIGNAL(queue->queue_not_empty);
+    MUTEX_UNLOCK(queue->queue_write_lock);
+    return true;
 }
 
 
@@ -311,23 +288,23 @@ static bool Enqueue(LogQueue* queue, LogMessage* message) {
  * If queue is empty return nothing, otherwise return message
  */
 static LogMessage* Dequeue(LogQueue* queue) {
+    MUTEX_LOCK(queue->queue_read_lock);
+
     #ifdef DEBUG
         assert(queue);
     #endif
 
-    if (IsQueueEmpty(queue)) return NULL;
+    while (IsQueueEmpty(queue)) {
+        COND_WAIT(queue->queue_not_empty, queue->queue_read_lock);
+    }
 
     LogMessage* message = queue->messages[queue->tail];
     queue->messages[queue->tail] = NULL;
-
-    // Last message sentinel
-    if (message->done) {
-        queue->tail = (queue->tail + 1) % queue->actual_capacity;
-    } else {
-        queue->tail = (queue->tail + 1) % queue->capacity;
-    }
-
+    queue->tail = (queue->tail + 1) % queue->capacity;
     queue->size--;
+
+    COND_SIGNAL(queue->queue_not_full);
+    MUTEX_UNLOCK(queue->queue_read_lock);
     return message;
     
 }
@@ -350,33 +327,26 @@ static void* RunLogger(void* arg) {
     // For some reason you have to grab the read lock and read all that you can in a loop
     // Or else the condition is never signaled and you wait
     while (!logger->done) {
-        MUTEX_LOCK(logger->queue->read_lock);
-        // Do not block just wait for the condition
-        COND_WAIT(logger->queue->message_arrived_condition, logger->queue->read_lock);
+        LogMessage* message = Dequeue(logger->queue);
 
-        while(!IsQueueEmpty(logger->queue)) {
-        
-            LogMessage* message = Dequeue(logger->queue);
+        #ifdef DEBUG
+            assert(logger);
+            assert(message);
+        #endif
 
-            #ifdef DEBUG
-                assert(logger);
-                assert(message);
-            #endif
-
-            if (message) {
-                // Done at this point
-                if (message->done) {
-                    logger->done = true;
-                    continue;
-                }
-
-                LogHandler(message, logger->log_format);
-               
+        if (message) {
+            // Done at this point
+            if (message->done) {
+                logger->done = true;
+                continue;
             }
-        }
 
-        MUTEX_UNLOCK(logger->queue->read_lock);
+            LogHandler(message, logger->log_format);
+            
+        }
     }
+
+    DestroyQueue(&logger->queue);
 
     return EXIT_SUCCESS;
 }
@@ -569,7 +539,6 @@ static void CleanUpLogger(int32_t id) {
     // then joining thread
     Enqueue(loggers[id]->queue, &TERMINATE);
     THREAD_JOIN(loggers[id]->thread_id);
-    DestroyQueue(&loggers[id]->queue);
     loggers[id]->queue = NULL;
 
     // Close the handler specified by format
@@ -594,7 +563,7 @@ static void CleanUpLogger(int32_t id) {
     free(loggers[id]);
 
     // Set to NULL
-    loggers[id] = NULL;
+    memset(loggers[id], 0, sizeof(Logger));
 
     // Decrement total count
     total_loggers--;
@@ -612,6 +581,7 @@ void ShutdownLoggers() {
     }
 
     // Deallocate memory
+    memset(loggers, 0, loggers_length * sizeof(Logger*));
     free(loggers);
     loggers = NULL;
     total_loggers = 0;
