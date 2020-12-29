@@ -6,9 +6,12 @@ cmake_minimum_required(VERSION 3.13.4)
 add_executable("${PROJECT_NAME}")
 install(TARGETS "${PROJECT_NAME}" RUNTIME DESTINATION bin)
 
+# For threads
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries("${PROJECT_NAME}" PRIVATE Threads::Threads)
+# Math lib
+target_link_libraries("${PROJECT_NAME}" PRIVATE m)
 
 # Flags
 if(MSVC)
@@ -56,8 +59,6 @@ target_include_directories("${PROJECT_NAME}" PRIVATE
 target_sources("${PROJECT_NAME}" PRIVATE 
     src/main.c 
     src/cpu/cpu.c 
-    src/util/log.c
     src/util/arguments.c
-    src/util/common.c
 )
 

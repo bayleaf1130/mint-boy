@@ -1,8 +1,8 @@
 #include "cpu/cpu.h"
-#include "util/common.h"
+#include <assert.h>
 
 int InitCpu(LR35902* cpu) {
-    #ifdef DEBUG
+    #ifdef MINTBOY_DEBUG
         assert(cpu);
     #endif
     cpu->af.f = 0x60;
