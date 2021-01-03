@@ -1,4 +1,4 @@
-#include "util/arguments.h"
+#include "arguments.h"
 
 #include <string.h>
 
@@ -14,6 +14,8 @@ Arguments ParseArgs(int argc, char** argv) {
             args.rom_name = argv[i];
         }
     }
+
+    if (!args.rom_name) args.rom_name = "";
 
     return args;
 }

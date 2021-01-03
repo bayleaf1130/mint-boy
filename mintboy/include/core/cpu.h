@@ -1,6 +1,8 @@
 #ifndef MINTBOY_CPU_H
 #define MINTBOY_CPU_H
 
+#include "bus.h"
+
 #include <stdint.h>
 
 
@@ -25,25 +27,19 @@ Bit 	Name 	Set 	Clr 	Expl.
 
 */
 
+
+// Declare incomplete type
 typedef struct {
-    struct {
-        union {
-            uint8_t f;
-            struct {
-                uint8_t padding: 4;
-                uint8_t cy: 1;
-                uint8_t h: 1;
-                uint8_t n: 1;
-                uint8_t zf: 1;
-            };
-        };
-        uint8_t a;
-    } af;
+    uint16_t af;
     uint16_t bc;
     uint16_t de;
     uint16_t hl;
     uint16_t sp;
     uint16_t pc;
+    Bus* bus;
 } LR35902;
 
-#endif
+extern void LR35902_init(LR35902* cpu, Bus* bus);
+extern void LR35902_cycle(LR35902* cpu);
+
+#endif // MINTBOY_CPU_H

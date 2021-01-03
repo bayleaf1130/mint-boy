@@ -1,10 +1,6 @@
-#include "cpu/cpu.h"
-
-#define LOGGO_IMPLEMENTATION
-#define LOGGO_SHORT_NAMES
-#define LOGGO_USE_HELPERS
-#include "util/log.h"
-#include "util/arguments.h"
+#include "cpu.h"
+#include "arguments.h"
+#include "common.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -20,39 +16,23 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    int32_t id = CreateLogger("stdout", 
-                            &(LoggoLogFormat){.colors=true, .level=LOGGO_LEVEL_DEBUG, .flush=true, .time_format="%Y-%M-%D", .linebeg="[LOG STDOUT]", .linesep="\n"},
-                            NULL);
+    logger_init();
 
-    int32_t id2 = CreateLogger("stderr", 
-                            &(LoggoLogFormat){.colors=true, .level=LOGGO_LEVEL_DEBUG, .flush=true, .time_format="%Y-%M-%D", .linebeg="[LOG STDERR]", .linesep="\n"},
-                            &(LoggoLogHandler){.handle=stderr, .write_handler=StreamWrite});
 
-    if (id == -1 || id2 == -1) {
-        DeleteLoggers();
-        fprintf(stderr, "Could not init logger..... Exiting");
-        exit(EXIT_FAILURE);
-    }
-
-    LOG_DEBUG("stdout", "Hello Debug");
-    LOG_INFO("stdout", "Hello Info");
-    LOG_WARN("stdout", "Hello Warn");
-    LOG_ERROR("stdout", "Hello Error");
-    LOG_FATAL("stdout", "Hello Fatal");
-
-    LOG_DEBUG("stderr", "Hello D");
-    LOG_INFO("stderr", "Hello I");
-    LOG_WARN("stderr", "Hello W");
-    LOG_ERROR("stderr", "Hello E");
-    LOG_FATAL("stderr", "Hello F");
+    LOG_DEBUG(G_LOGGER_NAME, "Hello Debug");
+    LOG_INFO(G_LOGGER_NAME, "Hello Info");
+    LOG_WARN(G_LOGGER_NAME, "Hello Warn");
+    LOG_ERROR(G_LOGGER_NAME, "Hello Error");
+    LOG_FATAL(G_LOGGER_NAME, "Hello Fatal");
 
 
     // Parse Args
     Arguments args = ParseArgs(argc, argv);
-    fprintf(stdout, "[Args Parsed]\n\tDebug: %d\n\tRom: %s\n\t", args.debug, args.rom_name);
+    char info[128U];
+    snprintf(info, sizeof(info), "[ARGS] Debug: %s, Rom: %s", args.debug ? "True" : "False", args.rom_name ? args.rom_name : "None");
+    LOG_INFO(G_LOGGER_NAME, info);
 
-    LOG_DEBUG("stdout", "DONE");
-    DeleteLoggers();
-
+    // Call this before close
+    logger_cleanup();
     return EXIT_SUCCESS;
 }

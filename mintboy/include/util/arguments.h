@@ -10,4 +10,4 @@ typedef struct {
 
 Arguments ParseArgs(int argc, char** argv);
 
-#endif
+#endif // MINTBOY_ARGUMENTS_H

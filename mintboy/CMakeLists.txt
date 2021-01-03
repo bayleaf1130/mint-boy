@@ -2,6 +2,8 @@
 
 cmake_minimum_required(VERSION 3.13.4)
 
+list(APPEND "INCLUDE_DIRS" "${CMAKE_CURRENT_SOURCE_DIR}/include/core" "${CMAKE_CURRENT_SOURCE_DIR}/include/util")
+
 # Targets
 add_executable("${PROJECT_NAME}")
 install(TARGETS "${PROJECT_NAME}" RUNTIME DESTINATION bin)
@@ -40,7 +42,7 @@ else()
     )
 endif()
 
-target_compile_definitions("${PROJECT_NAME}" PRIVATE $<$<CONFIG:DEBUG>:DEBUG>)
+target_compile_definitions("${PROJECT_NAME}" PRIVATE $<$<CONFIG:DEBUG>:MINTBOY_DEBUG>)
 set_target_properties("${PROJECT_NAME}" PROPERTIES C_STANDARD 11)
 
 # More things
@@ -53,12 +55,14 @@ set_target_properties("${PROJECT_NAME}"
 
 
 target_include_directories("${PROJECT_NAME}" PRIVATE 
-    "include"
+    "${INCLUDE_DIRS}"
 )
 
 target_sources("${PROJECT_NAME}" PRIVATE 
     src/main.c 
-    src/cpu/cpu.c 
+    src/core/cpu.c 
+    src/core/bus.c
     src/util/arguments.c
+    src/util/common.c
 )
 
